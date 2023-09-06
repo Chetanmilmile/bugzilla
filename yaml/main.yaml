@@ -1,0 +1,31 @@
+trigger:
+- master  # You can change this to match your branch naming convention
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: |
+    # Update the package list
+    sudo apt-get update
+
+    # Install Bugzilla dependencies
+    sudo apt-get install -y apache2 libapache2-mod-perl2 build-essential libnet-ldap-perl libauthen-sasl-perl libio-socket-ssl-perl libnet-ssleay-perl mysql-server libdbd-mysql-perl libdbi-perl libdatetime-timezone-perl libemail-sender-perl libemail-mime-perl libemail-mime-modifier-perl libemail-simple-perl libemail-date-format-perl libemail-messageid-perl libemail-mime-encodings-perl liburi-perl libhtml-parser-perl libxml-twig-perl libtemplate-perl libemail-reply-perl libgd-graph-perl libchart-perl libxml-ep-perl libio-socket-ssl-perl libpdf-api2-perl libjson-rpc-perl libdaemon-generic-perl libtheschwartz-perl libserver-starter-perl libplack-perl libyaml-perl libyaml-libyaml-perl libmldbm-perl libnet-dns-perl
+
+    # Download and configure Bugzilla
+    wget https://www.bugzilla.org/release/bugzilla-5.2.7.tar.gz
+    tar -zxvf bugzilla-5.2.7.tar.gz
+    sudo mv bugzilla-5.2.7 /var/www/html/bugzilla
+    sudo chown -R www-data:www-data /var/www/html/bugzilla
+    cd /var/www/html/bugzilla
+    sudo perl install-module.pl --all
+
+    # Configure Bugzilla database
+    sudo mysql -u root -e "create database bugs;"
+    sudo mysql -u root bugs < checksetup.mysql
+
+    # Configure Apache to serve Bugzilla
+    sudo a2enmod cgi
+    sudo systemctl restart apache2
+
+  displayName: 'Install Bugzilla'
